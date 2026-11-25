@@ -70,6 +70,8 @@ for page in ao3py.getAllPages(ao3py.getSeries, seriesId=77):
 
 ## API Overview
 
+See the full [API Reference](API_REFERENCE.md) for complete type signatures, data class fields, enums, and behavioral notes.
+
 | Category | Exports |
 | --- | --- |
 | Works & Chapters | `getWork`, `getWorkContent`, `getWorkWithChapters`, `parseWorkBlurb` |
