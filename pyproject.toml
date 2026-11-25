@@ -120,7 +120,6 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"release.py" = ["S603", "S607", "T201"]  # release script prints progress and invokes git/build/twine
 "tests/*.py" = ["INP001"]                # pytest test directory intentionally omits __init__.py
 
 [tool.ruff.lint.isort]
@@ -138,7 +137,6 @@ ignore = [
     "CONTRIBUTING.md",
     "lint",
     "mypy.ini",
-    "release.py",
     "requirements-dev.txt",
     "requirements.txt",
     "tests/**",
