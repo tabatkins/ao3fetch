@@ -1,6 +1,6 @@
 # ao3py
 
-A typed Python 3.12+ library for scraping [Archive of Our Own (AO3)](https://archiveofourown.org) and AO3-compatible OTW archives (such as Superlove or SquidgeWorld), ported from [FujoWebDev/AO3.js](https://github.com/FujoWebDev/AO3.js).
+A typed Python 3.12+ library for scraping [Archive of Our Own (AO3)](https://archiveofourown.org) and AO3-compatible OTW archives (such as Superlove or SquidgeWorld), ported from [FujoWebDev/AO3.js](https://github.com/FujoWebDev/AO3.js). (Currently up-to-date with [Commit 62e3ab8e](https://github.com/FujoWebDev/AO3.js/commit/62e3ab8ed6f0562e131b6f5aeb215c392a571678).)
 
 ## Features
 
