@@ -1,4 +1,4 @@
-# ao3py
+# ao3fetch
 
 A typed Python 3.12+ library for scraping [Archive of Our Own (AO3)](https://archiveofourown.org) and AO3-compatible OTW archives (such as Superlove or SquidgeWorld), ported from [FujoWebDev/AO3.js](https://github.com/FujoWebDev/AO3.js). (Currently up-to-date with [Commit 62e3ab8e](https://github.com/FujoWebDev/AO3.js/commit/62e3ab8ed6f0562e131b6f5aeb215c392a571678).)
 
@@ -16,7 +16,7 @@ A typed Python 3.12+ library for scraping [Archive of Our Own (AO3)](https://arc
 ## Installation
 
 ```sh
-pip install ao3py
+pip install ao3fetch
 ```
 
 Requires Python 3.12+ and `beautifulsoup4>=4.12`.
@@ -24,46 +24,46 @@ Requires Python 3.12+ and `beautifulsoup4>=4.12`.
 ## Quick Start
 
 ```python
-import ao3py
+import ao3fetch
 
 # Optional: enable retry (respecting 429 Retry-After) and in-memory caching.
-ao3py.setFetcher(ao3py.withCache(ao3py.withRetry(ao3py.defaultFetch)))
+ao3fetch.setFetcher(ao3fetch.withCache(ao3fetch.withRetry(ao3fetch.defaultFetch)))
 
 # Fetch a full work from AO3 (or another AO3-compatible archive).
-work = ao3py.getWorkContent(123456, fullWork=True)
-if not isinstance(work, ao3py.LockedWorkSummary):
+work = ao3fetch.getWorkContent(123456, fullWork=True)
+if not isinstance(work, ao3fetch.LockedWorkSummary):
     print(work.title, "by", ", ".join(a.pseud for a in work.authors))
     for chapter in work.content.chapters:
-        markdown = ao3py.toMarkdown(chapter.html)
+        markdown = ao3fetch.toMarkdown(chapter.html)
         print(markdown)
 ```
 
 ### Targeting an AO3-Compatible Archive
 
 ```python
-import ao3py
+import ao3fetch
 
-ao3py.setArchiveBaseUrl("https://superlove.sayitditto.net")
-work = ao3py.getWork(1269)
-ao3py.resetArchiveBaseUrl()
+ao3fetch.setArchiveBaseUrl("https://superlove.sayitditto.net")
+work = ao3fetch.getWork(1269)
+ao3fetch.resetArchiveBaseUrl()
 ```
 
 ### Parsing a Local AO3 EPUB Download
 
 ```python
 from pathlib import Path
-import ao3py
+import ao3fetch
 
-work = ao3py.parseEpubWork(Path("story.epub").read_bytes(), filePath="story.epub")
+work = ao3fetch.parseEpubWork(Path("story.epub").read_bytes(), filePath="story.epub")
 print(work.title, len(work.content.chapters))
 ```
 
 ### Iterating Paginated Listings
 
 ```python
-import ao3py
+import ao3fetch
 
-for page in ao3py.getAllPages(ao3py.getSeries, seriesId=77):
+for page in ao3fetch.getAllPages(ao3fetch.getSeries, seriesId=77):
     for blurb in page.works:
         print(blurb.title)
 ```
@@ -97,4 +97,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for coding conventions.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE). Ported from [FujoWebDev/AO3.js](https://github.com/FujoWebDev/AO3.js) (MIT).
+MIT License — see [LICENSE.md](LICENSE.md). Ported from [FujoWebDev/AO3.js](https://github.com/FujoWebDev/AO3.js) (MIT).

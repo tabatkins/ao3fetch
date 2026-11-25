@@ -1,8 +1,8 @@
-# `ao3py` API Reference
+# `ao3fetch` API Reference
 
-Complete reference for all public functions, classes, enums, type aliases, exceptions, and constants exported by `ao3py`.
+Complete reference for all public functions, classes, enums, type aliases, exceptions, and constants exported by `ao3fetch`.
 
-All symbols documented below are re-exported directly from the top-level `ao3py` package (e.g. `import ao3py; ao3py.getWorkContent(...)`).
+All symbols documented below are re-exported directly from the top-level `ao3fetch` package (e.g. `import ao3fetch; ao3fetch.getWorkContent(...)`).
 
 ## Table of Contents
 
@@ -577,7 +577,7 @@ Literal["name", "created_at", "works_count"]
 Lazily yield every page of a paginated getter (`getSeries`, `getUserWorks`, `searchTags`), fetching one page per iteration.
 
 - Always calls `getter(page=1, **kwargs)` first, then continues while `page <= result.pages.total` (so empty listings with `pages.total == 0` yield the single empty page 1 and stop).
-- Forward any required getter parameters as keyword arguments (e.g. `getAllPages(ao3py.getSeries, seriesId=77)`).
+- Forward any required getter parameters as keyword arguments (e.g. `getAllPages(ao3fetch.getSeries, seriesId=77)`).
 
 #### `collectAllPages[R: PagedResult](getter: Callable[..., R], **kwargs: Any) -> list[R]`
 Eagerly fetch every page from [`getAllPages`](#getallpagesr-pagedresultgetter-callable-r-kwargs-any---iterabler) and return them as a `list`.
@@ -626,7 +626,7 @@ Convert AO3 HTML content (prose, summaries, or author's notes) into clean Common
 Default archive base URL read from the `ARCHIVE_BASE_URL` environment variable at import time, defaulting to `"https://archiveofourown.org"`.
 
 #### `urls`
-The `ao3py.urls` submodule itself (also re-exported at top level for compatibility with code referencing `ao3py.urls.*`).
+The `ao3fetch.urls` submodule itself (also re-exported at top level for compatibility with code referencing `ao3fetch.urls.*`).
 
 <a id="archive-base-url-configuration"></a>
 ### Archive Base URL Configuration
@@ -736,7 +736,7 @@ Fetcher state is process-global (not thread-local). Restore the default or previ
 Default HTTP `GET` fetcher built on Python's stdlib `urllib.request`.
 
 - Accepts only `https://` and `http://` URLs (raises `ValueError` for other schemes).
-- Sends a default `ao3py` `User-Agent` header (overridable via `headers`) and uses a 30-second timeout.
+- Sends a default `ao3fetch` `User-Agent` header (overridable via `headers`) and uses a 30-second timeout.
 - Returns `4xx`/`5xx` HTTP errors as `FetchResponse` objects (with `response.ok == False`) rather than raising `urllib.error.HTTPError`. Network/transport failures raise `OSError`.
 
 #### `getFetcher() -> Fetcher`

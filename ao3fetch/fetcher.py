@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from . import t
 
-_DEFAULT_USER_AGENT: t.Final[str] = "ao3py/0.1 (+https://github.com/tabatkins/ao3py)"
+_DEFAULT_USER_AGENT: t.Final[str] = "ao3fetch/0.1 (+https://github.com/tabatkins/ao3fetch)"
 _DEFAULT_TIMEOUT_SECONDS: t.Final[float] = 30.0
 
 

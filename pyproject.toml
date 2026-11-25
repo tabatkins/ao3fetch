@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ao3py"
+name = "ao3fetch"
 dynamic = ["version"]
 description = "Python library for scraping AO3 and AO3-compatible archives, ported from FujoWebDev/AO3.js"
 readme = "README.md"
@@ -29,18 +29,18 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tabatkins/ao3py"
-Repository = "https://github.com/tabatkins/ao3py"
+Homepage = "https://github.com/tabatkins/ao3fetch"
+Repository = "https://github.com/tabatkins/ao3fetch"
 
 [tool.setuptools.dynamic]
 version = {file = "semver.txt"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ao3py*"]
+include = ["ao3fetch*"]
 
 [tool.setuptools.package-data]
-ao3py = ["py.typed"]
+ao3fetch = ["py.typed"]
 
 [tool.black]
 line-length = 120

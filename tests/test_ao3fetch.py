@@ -1,4 +1,4 @@
-"""Tests for ao3py (Python port of FujoWebDev/AO3.js)."""
+"""Tests for ao3fetch (Python port of FujoWebDev/AO3.js)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from collections.abc import Mapping
 
 import pytest
 
-import ao3py
+import ao3fetch
 
 _WORK_SINGLE_HTML = """<!DOCTYPE html>
 <html><body>
@@ -197,12 +197,12 @@ _TAG_WORKS_FEED_HTML = '<html><body><a class="rss" href="/tags/12345/feed.atom">
 _TAG_ATOM_XML = "<?xml version='1.0'?><feed><title>AO3 works tagged 'Sherlock Holmes'</title></feed>"
 
 
-def _makeRouteFetcher(routes: dict[str, tuple[int, str]]) -> ao3py.Fetcher:
-    def _fetch(url: str, _headers: Mapping[str, str] | None = None) -> ao3py.FetchResponse:
+def _makeRouteFetcher(routes: dict[str, tuple[int, str]]) -> ao3fetch.Fetcher:
+    def _fetch(url: str, _headers: Mapping[str, str] | None = None) -> ao3fetch.FetchResponse:
         if url in routes:
             status, body = routes[url]
-            return ao3py.FetchResponse(status=status, headers={}, body=body.encode("utf-8"), url=url)
-        return ao3py.FetchResponse(status=404, headers={}, body=b"Not Found", url=url)
+            return ao3fetch.FetchResponse(status=status, headers={}, body=body.encode("utf-8"), url=url)
+        return ao3fetch.FetchResponse(status=404, headers={}, body=b"Not Found", url=url)
 
     return _fetch
 
@@ -252,28 +252,28 @@ def _buildTestEpub() -> bytes:
 
 def test_url_builders_and_parsers() -> None:
     """URL builders, AO3 tag escaping, short URLs, and URL parsers match AO3.js."""
-    ao3py.resetArchiveBaseUrl()
-    assert ao3py.getWorkUrl(36667228) == "https://archiveofourown.org/works/36667228"
+    ao3fetch.resetArchiveBaseUrl()
+    assert ao3fetch.getWorkUrl(36667228) == "https://archiveofourown.org/works/36667228"
     assert (
-        ao3py.getWorkUrl(398023, chapterId=659774, collectionName="YJ_Prompts", fullWork=True)
+        ao3fetch.getWorkUrl(398023, chapterId=659774, collectionName="YJ_Prompts", fullWork=True)
         == "https://archiveofourown.org/collections/YJ_Prompts/works/398023/chapters/659774?view_full_work=true"
     )
-    assert ao3py.getAsShortUrl("https://archiveofourown.org/works/123") == "https://ao3.org/works/123"
-    assert ao3py.getAsShortUrl("https://superlove.sayitditto.net/works/1269") is None
+    assert ao3fetch.getAsShortUrl("https://archiveofourown.org/works/123") == "https://ao3.org/works/123"
+    assert ao3fetch.getAsShortUrl("https://superlove.sayitditto.net/works/1269") is None
 
-    parsed = ao3py.getWorkDetailsFromUrl("https://superlove.sayitditto.net/works/1269/chapters/42")
+    parsed = ao3fetch.getWorkDetailsFromUrl("https://superlove.sayitditto.net/works/1269/chapters/42")
     assert parsed.workId == 1269
     assert parsed.chapterId == 42
     assert parsed.baseUrl == "https://superlove.sayitditto.net"
 
-    shortParsed = ao3py.getWorkDetailsFromUrl("https://ao3.org/works/323217")
+    shortParsed = ao3fetch.getWorkDetailsFromUrl("https://ao3.org/works/323217")
     assert shortParsed.baseUrl == "https://archiveofourown.org"
 
     assert (
-        ao3py.getTagUrl("A/B & C.D#E?F")
+        ao3fetch.getTagUrl("A/B & C.D#E?F")
         == "https://archiveofourown.org/tags/A%2As%2AB%20%2Aa%2A%20C%2Ad%2AD%2Ah%2AE%2Aq%2AF/"
     )
-    assert ao3py.getAuthorFromUrl("/users/astolat/pseuds/the%20lady") == ao3py.Author(
+    assert ao3fetch.getAuthorFromUrl("/users/astolat/pseuds/the%20lady") == ao3fetch.Author(
         username="astolat",
         pseud="the lady",
         anonymous=False,
@@ -285,21 +285,21 @@ def test_fetcher_retry_and_cache() -> None:
     calls = 0
     delays: list[float] = []
 
-    def _flaky(url: str, _headers: Mapping[str, str] | None = None) -> ao3py.FetchResponse:
+    def _flaky(url: str, _headers: Mapping[str, str] | None = None) -> ao3fetch.FetchResponse:
         nonlocal calls
         calls += 1
         if calls == 1:
-            return ao3py.FetchResponse(status=429, headers={"Retry-After": "2"}, body=b"", url=url)
+            return ao3fetch.FetchResponse(status=429, headers={"Retry-After": "2"}, body=b"", url=url)
         if calls == 2:
-            return ao3py.FetchResponse(status=503, headers={}, body=b"", url=url)
-        return ao3py.FetchResponse(status=200, headers={}, body=b"ok", url=url)
+            return ao3fetch.FetchResponse(status=503, headers={}, body=b"", url=url)
+        return ao3fetch.FetchResponse(status=200, headers={}, body=b"ok", url=url)
 
-    retried = ao3py.withRetry(
+    retried = ao3fetch.withRetry(
         _flaky,
         baseDelaySeconds=0.1,
         sleepFunc=delays.append,
     )
-    cached = ao3py.withCache(retried, ttlSeconds=60.0, maxEntries=10)
+    cached = ao3fetch.withCache(retried, ttlSeconds=60.0, maxEntries=10)
 
     first = cached("https://example.com/a", {"Cookie": "view_adult=true;"})
     second = cached("https://example.com/a", {"Cookie": "view_adult=true;"})
@@ -324,12 +324,12 @@ def test_work_series_user_and_tag_scrapers() -> None:
         "https://archiveofourown.org/tags/Sherlock%20Holmes/works": (200, _TAG_WORKS_FEED_HTML),
         "https://archiveofourown.org/tags/12345/feed.atom": (200, _TAG_ATOM_XML),
     }
-    ao3py.setFetcher(_makeRouteFetcher(routes))
+    ao3fetch.setFetcher(_makeRouteFetcher(routes))
     try:
         # AO3-compatible archive (Superlove).
-        ao3py.setArchiveBaseUrl("https://superlove.sayitditto.net/")
-        single = ao3py.getWorkContent(1269)
-        assert not isinstance(single, ao3py.LockedWorkSummary)
+        ao3fetch.setArchiveBaseUrl("https://superlove.sayitditto.net/")
+        single = ao3fetch.getWorkContent(1269)
+        assert not isinstance(single, ao3fetch.LockedWorkSummary)
         assert single.host == "superlove.sayitditto.net"
         assert single.shortUrl is None
         assert single.title == "and she burned the sky"
@@ -339,12 +339,12 @@ def test_work_series_user_and_tag_scrapers() -> None:
         assert single.content.notes.start == "<p>Work start note.</p>"
         assert single.content.notes.end == "<p>Work end note.</p>"
         assert "Work Text" not in single.content.chapters[0].html
-        assert ao3py.toPlainText(single.content.chapters[0].html) == "The sky was bright.\n\n---\n\nThen it faded."
+        assert ao3fetch.toPlainText(single.content.chapters[0].html) == "The sky was bright.\n\n---\n\nThen it faded."
 
         # Standard AO3 multi-chapter full work + /navigate + locked work.
-        ao3py.resetArchiveBaseUrl()
-        multi = ao3py.getWorkContent(555, fullWork=True)
-        assert not isinstance(multi, ao3py.LockedWorkSummary)
+        ao3fetch.resetArchiveBaseUrl()
+        multi = ao3fetch.getWorkContent(555, fullWork=True)
+        assert not isinstance(multi, ao3fetch.LockedWorkSummary)
         assert multi.complete is False
         assert multi.chapters.published == 2
         assert multi.chapters.total is None
@@ -355,51 +355,51 @@ def test_work_series_user_and_tag_scrapers() -> None:
         assert multi.content.chapters[1].title is None
         assert multi.series[0].name == "Great Series"
 
-        nav = ao3py.getWorkWithChapters(555)
+        nav = ao3fetch.getWorkWithChapters(555)
         assert [ch.publishedAt for ch in nav.chapters] == ["2026-01-10", "2026-02-15"]
         assert nav.chapters[0].title == "Dawn"
         assert nav.chapters[1].title is None
 
-        locked = ao3py.getWork(9999)
-        assert isinstance(locked, ao3py.LockedWorkSummary)
+        locked = ao3fetch.getWork(9999)
+        assert isinstance(locked, ao3fetch.LockedWorkSummary)
         assert locked.locked is True
 
         # Series pagination.
-        pages = ao3py.collectAllPages(ao3py.getSeries, seriesId=77)
+        pages = ao3fetch.collectAllPages(ao3fetch.getSeries, seriesId=77)
         assert len(pages) == 2
         assert [w.title for p in pages for w in p.works] == ["First Work", "Second Work"]
 
         # User profile.
-        user = ao3py.getUser("astolat")
+        user = ao3fetch.getUser("astolat")
         assert user.id == 1
         assert user.pseuds == "astolat, shalott"
         assert user.works == 25
         assert user.location == "NYC"
 
         # Tag profile + Atom lookup.
-        tag = ao3py.getTag("Sherlock Holmes")
+        tag = ao3fetch.getTag("Sherlock Holmes")
         assert tag.id == 12345
         assert tag.canonical is True
         assert tag.category == "character"
         assert tag.parentTags == ("Sherlock (TV)",)
-        assert tag.childTags == (ao3py.ChildTag(tagName="Deduction", category="additional tags"),)
+        assert tag.childTags == (ao3fetch.ChildTag(tagName="Deduction", category="additional tags"),)
         assert tag.subTags == (
-            ao3py.SubTag(tagName="Teen Sherlock", parentSubTag=None),
-            ao3py.SubTag(tagName="Young Sherlock", parentSubTag="Teen Sherlock"),
+            ao3fetch.SubTag(tagName="Teen Sherlock", parentSubTag=None),
+            ao3fetch.SubTag(tagName="Young Sherlock", parentSubTag="Teen Sherlock"),
         )
-        assert ao3py.getTagNameById(12345) == "Sherlock Holmes"
+        assert ao3fetch.getTagNameById(12345) == "Sherlock Holmes"
     finally:
-        ao3py.resetFetcher()
-        ao3py.resetArchiveBaseUrl()
+        ao3fetch.resetFetcher()
+        ao3fetch.resetArchiveBaseUrl()
 
 
 def test_parse_epub_work() -> None:
     """parseEpubWork extracts metadata, chapters, notes, and embedded images from an EPUB."""
-    work = ao3py.parseEpubWork(_buildTestEpub(), filePath="story.epub")
+    work = ao3fetch.parseEpubWork(_buildTestEpub(), filePath="story.epub")
     assert work.id == 999
     assert work.title == "EPUB Story"
-    assert work.authors == (ao3py.Author(username="u1", pseud="p1", anonymous=False),)
-    assert work.tags.warnings == (ao3py.WorkWarnings.CHOOSE_NOT_TO_WARN,)
+    assert work.authors == (ao3fetch.Author(username="u1", pseud="p1", anonymous=False),)
+    assert work.tags.warnings == (ao3fetch.WorkWarnings.CHOOSE_NOT_TO_WARN,)
     assert work.language == "English"
     assert work.summary == "<p>EPUB summary.</p>"
     assert work.content.notes.start == "<p>EPUB top note.</p>"
@@ -411,7 +411,7 @@ def test_parse_epub_work() -> None:
 
 def test_invalid_id_raises() -> None:
     """Invalid work/series IDs raise InvalidIDError."""
-    with pytest.raises(ao3py.InvalidIDError):
-        ao3py.getWork("not-a-number")
-    with pytest.raises(ao3py.InvalidIDError):
-        ao3py.getSeries("bad")
+    with pytest.raises(ao3fetch.InvalidIDError):
+        ao3fetch.getWork("not-a-number")
+    with pytest.raises(ao3fetch.InvalidIDError):
+        ao3fetch.getSeries("bad")

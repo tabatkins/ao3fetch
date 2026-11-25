@@ -1,6 +1,6 @@
 include README.md
 include API_REFERENCE.md
-include LICENSE
+include LICENSE.md
 include semver.txt
-graft ao3py
+graft ao3fetch
 global-exclude *.py[cod] __pycache__
