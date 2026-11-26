@@ -269,10 +269,7 @@ def test_url_builders_and_parsers() -> None:
     shortParsed = ao3fetch.getWorkDetailsFromUrl("https://ao3.org/works/323217")
     assert shortParsed.baseUrl == "https://archiveofourown.org"
 
-    assert (
-        ao3fetch.getTagUrl("A/B & C.D#E?F")
-        == "https://archiveofourown.org/tags/A%2As%2AB%20%2Aa%2A%20C%2Ad%2AD%2Ah%2AE%2Aq%2AF/"
-    )
+    assert ao3fetch.getTagUrl("A/B & C.D#E?F") == "https://archiveofourown.org/tags/A*s*B%20*a*%20C*d*D*h*E*q*F/"
     assert ao3fetch.getAuthorFromUrl("/users/astolat/pseuds/the%20lady") == ao3fetch.Author(
         username="astolat",
         pseud="the lady",

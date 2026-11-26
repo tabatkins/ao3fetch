@@ -130,7 +130,7 @@ allow-multiline = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "tests"]
 
 [tool.check-manifest]
 ignore = [

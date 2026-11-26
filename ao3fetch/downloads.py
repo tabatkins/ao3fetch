@@ -125,7 +125,7 @@ def _extractEpubBody(epub: bytes) -> tuple[BeautifulSoup, str]:
             itemId = item.get("id")
             href = item.get("href")
             mediaType = item.get("media-type")
-            if isinstance(itemId, str) and isinstance(href, str):
+            if isinstance(itemId, str) and isinstance(href, str) and href:
                 resolvedMedia = mediaType if isinstance(mediaType, str) else "image/jpeg"
                 items[itemId] = (href, resolvedMedia)
                 mediaTypes[_resolveZipPath(packagePath, href)] = resolvedMedia
@@ -213,8 +213,8 @@ def _extractPrefaceTags(soup: BeautifulSoup) -> dict[str, list[str]]:
     rawTags: dict[str, list[str]] = {}
     for term in soup.select("#preface dl.tags dt"):
         label = cleanText(term.get_text()).rstrip(":")
-        dd = term.find_next_sibling("dd")
-        if not isinstance(dd, Tag):
+        dd = term.find_next_sibling()
+        if not isinstance(dd, Tag) or dd.name != "dd":
             continue
         links = dd.find_all("a")
         if links:

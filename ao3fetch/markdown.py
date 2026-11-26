@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Comment, Declaration, Doctype, NavigableString, ProcessingInstruction, Tag
 
 from . import t
 
@@ -82,6 +82,8 @@ def _renderList(node: Tag, *, ordered: bool) -> str:
 
 def _renderNode(node: Tag | NavigableString) -> str:
     """Convert a BeautifulSoup DOM subtree into clean fiction Markdown."""
+    if isinstance(node, (Comment, Declaration, Doctype, ProcessingInstruction)):
+        return ""
     if isinstance(node, NavigableString):
         text = str(node).replace("\xa0", " ").replace(_BR_MARKER, "")
         return _HTML_WS_RE.sub(" ", text)

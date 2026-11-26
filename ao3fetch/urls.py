@@ -34,6 +34,8 @@ _TOKEN_REPLACEMENTS: t.Final[dict[str, str]] = {
     "?": "*q*",
 }
 _REPLACE_TOKENS_RE: t.Final[re.Pattern[str]] = re.compile(r"(/|\.|&|#|\?)")
+# Exact ECMA-262 encodeURIComponent unescaped character set (matches AO3.js).
+_JS_URI_COMPONENT_SAFE: t.Final[str] = "-_.!~*'()"
 _USER_URL_RE: t.Final[re.Pattern[str]] = re.compile(r"/users/([^/?#]+)(?:/pseuds/([^/?#]+))?")
 _WORK_ID_RE: t.Final[re.Pattern[str]] = re.compile(r"works/(\d+)")
 _CHAPTER_ID_RE: t.Final[re.Pattern[str]] = re.compile(r"chapters/(\d+)")
@@ -163,7 +165,7 @@ def getDownloadUrls(
 
 def getUserProfileUrl(username: str) -> str:
     """Construct a user profile URL."""
-    return _joinBase(f"users/{quote(username, safe='')}/profile")
+    return _joinBase(f"users/{quote(username, safe=_JS_URI_COMPONENT_SAFE)}/profile")
 
 
 def getUserWorksUrl(
@@ -175,8 +177,10 @@ def getUserWorksUrl(
     sortDirection: SortDirection | None = None,
 ) -> str:
     """Construct a user's public works listing URL."""
-    userPath = f"users/{quote(username, safe='')}"
-    path = f"{userPath}/works" if pseud is None else f"{userPath}/pseuds/{quote(pseud, safe='')}/works"
+    userPath = f"users/{quote(username, safe=_JS_URI_COMPONENT_SAFE)}"
+    path = (
+        f"{userPath}/works" if pseud is None else f"{userPath}/pseuds/{quote(pseud, safe=_JS_URI_COMPONENT_SAFE)}/works"
+    )
     params: list[tuple[str, str]] = []
     if page is not None:
         params.append(("page", str(page)))
@@ -190,7 +194,7 @@ def getUserWorksUrl(
 def getTagUrl(tagName: str) -> str:
     """Construct an AO3 tag URL with AO3's special character token replacements."""
     replaced = _REPLACE_TOKENS_RE.sub(lambda match: _TOKEN_REPLACEMENTS[match.group(1)], tagName)
-    return _joinBase(f"tags/{quote(replaced, safe='')}/")
+    return _joinBase(f"tags/{quote(replaced, safe=_JS_URI_COMPONENT_SAFE)}/")
 
 
 def getTagWorksFeedUrl(tagName: str) -> str:

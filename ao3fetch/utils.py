@@ -5,12 +5,15 @@ from __future__ import annotations
 import re
 from typing import Literal
 
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Comment, Declaration, Doctype, NavigableString, ProcessingInstruction, Tag
+from bs4.formatter import HTMLFormatter
 
 from . import t
 from .entities import ArchiveId
 
+_HTML5_FORMATTER: t.Final[HTMLFormatter] = HTMLFormatter(void_element_close_prefix="")
 _WHITESPACE_RE: t.Final[re.Pattern[str]] = re.compile(r"\s+")
+_NEWLINE_RE: t.Final[re.Pattern[str]] = re.compile(r"[\r\n]+")
 _MULTI_NEWLINE_RE: t.Final[re.Pattern[str]] = re.compile(r"\n{3,}")
 _INT_STR_RE: t.Final[re.Pattern[str]] = re.compile(r"^\d+$")
 _MONTHS: t.Final[dict[str, str]] = {
@@ -61,13 +64,16 @@ def innerHtml(element: Tag | BeautifulSoup | None) -> str:
     """Return the inner HTML string of a BeautifulSoup element, matching Cheerio's .html()."""
     if element is None:
         return ""
-    return "".join(str(child) for child in element.contents)
+    return element.decode_contents(formatter=_HTML5_FORMATTER)
 
 
-def _renderPlainNode(node: Tag | NavigableString, parts: list[str]) -> None:
+def _renderPlainNode(node: Tag | NavigableString, parts: list[str], *, inPre: bool = False) -> None:
     """Recursively serialize a BeautifulSoup DOM node into AO3.js-compatible plain text."""
+    if isinstance(node, (Comment, Declaration, Doctype, ProcessingInstruction)):
+        return
     if isinstance(node, NavigableString):
-        parts.append(str(node))
+        text = str(node)
+        parts.append(text if inPre else _NEWLINE_RE.sub(" ", text))
         return
 
     tagName = node.name.lower() if node.name else ""
@@ -79,22 +85,42 @@ def _renderPlainNode(node: Tag | NavigableString, parts: list[str]) -> None:
     if tagName == "hr":
         parts.append("\n\n---\n\n")
         return
+    if tagName in {"ul", "ol"}:
+        parts.append("\n\n")
+        index = 1
+        itemLines: list[str] = []
+        for child in node.children:
+            if isinstance(child, Tag) and child.name and child.name.lower() == "li":
+                itemParts: list[str] = []
+                for grandchild in child.children:
+                    if isinstance(grandchild, (Tag, NavigableString)):
+                        _renderPlainNode(grandchild, itemParts, inPre=inPre)
+                prefix = "- " if tagName == "ul" else f"{index}. "
+                itemLines.append(prefix + "".join(itemParts).strip())
+                index += 1
+            elif isinstance(child, (Tag, NavigableString)):
+                subParts: list[str] = []
+                _renderPlainNode(child, subParts, inPre=inPre)
+                subText = "".join(subParts).strip()
+                if subText:
+                    itemLines.append(subText)
+        parts.append("\n".join(itemLines))
+        parts.append("\n\n")
+        return
     if tagName == "li":
-        parentName = node.parent.name.lower() if node.parent and node.parent.name else ""
-        prefix = "- " if parentName == "ul" else ""
-        parts.append("\n" + prefix)
+        parts.append("\n")
         for child in node.children:
             if isinstance(child, (Tag, NavigableString)):
-                _renderPlainNode(child, parts)
-        parts.append("\n")
+                _renderPlainNode(child, parts, inPre=inPre)
         return
 
     isBlock = tagName in _BLOCK_TAGS
+    childInPre = inPre or tagName == "pre"
     if isBlock:
         parts.append("\n\n")
     for child in node.children:
         if isinstance(child, (Tag, NavigableString)):
-            _renderPlainNode(child, parts)
+            _renderPlainNode(child, parts, inPre=childInPre)
     if isBlock:
         parts.append("\n\n")
 
